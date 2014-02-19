@@ -1,4 +1,4 @@
-# WP-Custom-Query-Interceptor
+# WP-Notification-Interceptor
 
 Intercept a notification from external web-services, then act upon it.
 
@@ -10,16 +10,16 @@ e.g. `http://example.com/very-random-string-to-make-sure-its-unique/paramater/`
 
 ##Usage
 
-Include the `abstract QueryInterceptor` class somewhere. Then extend it:
+Include the `abstract NotificationInterceptor` class somewhere. Then extend it:
 
-    class WebServiceInterceptor extends QueryInterceptor
+    class WebServiceInterceptor extends NotificationInterceptor
     {
         public $path = NOTIFICATION_PATH;
 
-        public function intercept($query)
+        public function intercept($argument)
         {
             echo $this->path . "\n\n";
-            echo "Argument : " . $query;
+            echo "Argument : " . $argument;
         }
 
     }

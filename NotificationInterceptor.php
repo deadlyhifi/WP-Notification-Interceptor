@@ -1,8 +1,8 @@
 <?php
 
-abstract class QueryInterceptor {
+abstract class NotificationInterceptor {
 
-	abstract public function intercept($query);
+	abstract public function intercept($argument);
 
 	public final function __construct()
 	{
