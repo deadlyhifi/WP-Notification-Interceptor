@@ -12,7 +12,7 @@ e.g. `http://example.com/very-random-string-to-make-sure-its-unique/paramater/`
 
 Include the `abstract QueryInterceptor` class somewhere. Then extend it:
 
-    class VideoConverterInterceptor extends QueryInterceptor
+    class WebServiceInterceptor extends QueryInterceptor
     {
         public $path = NOTIFICATION_PATH;
 
