@@ -1,44 +1,79 @@
-<?php
+<?php namespace JTV\Helpers;
 
-abstract class NotificationInterceptor {
+/**
+ *    This class will allow a page to be set and then a variable intercepted.
+ *
+ *    Use:
+ *    class NewClassName extends \JTV\Helpers\QueryInterceptor
+ *    {
+ *        public $path = 'url-path';
+ *
+ *        public function intercept($query)
+ *        {
+ *            echo "MADE IT with " . $query;
+ *        }
+ *    }
+ *
+ *    Flush rewrite rules!
+ *    http://www.php.net/manual/en/language.oop5.abstract.php
+ */
 
-	abstract public function intercept($argument);
+abstract class NotificationInterceptor
+{
+    abstract public function intercept($argument);
 
-	public final function __construct()
-	{
-		if(!isset($this->path))
-			throw new Exception(__CLASS__ . ' must have a $path variable defined.');
+    final public function __construct()
+    {
+        if (! isset($this->path)) {
+            throw new \Exception(__CLASS__ . ' must have a $path variable defined.');
+        }
 
-		add_filter('query_vars', [$this, 'add_query_vars']);
-		add_filter('rewrite_rules_array', [$this, 'add_rewrite_rules']);
-		add_action('template_redirect', [$this, 'template_redirect']);
-	}
+        add_filter('rewrite_rules_array', [$this, 'addRewriteRules']);
+        add_filter('query_vars', [$this, 'addQueryVars']);
+        add_action('parse_request', [$this, 'calcPath']);
+    }
 
-	// Add the URL
-	public final function add_query_vars($vars)
-	{
-	    $vars[] = $this->path;
-		return $vars;
-	}
+    public function calcPath($query)
+    {
+        if (isset($query->query_vars['pagename'])
+            && $query->query_vars['pagename'] === $this->path
+        ) {
+            add_filter('wp_headers', [$this, 'amendResponseHeaders']);
+            add_action('template_redirect', [$this, 'templateRedirect']);
+        }
+    }
 
-	// Add the new rewrite rule to existing ones.
-	public final function add_rewrite_rules($rules)
-	{
-	    $new_rules = [$this->path . '/([^/]+)/?$' => 'index.php?' . $this->path . '=$matches[1]'];
-	    $rules = $new_rules + $rules;
+    // Add the new rewrite rule to existings ones
+    final public function addRewriteRules($rules)
+    {
+        return [
+            '(' . $this->path . ')/([^/]+)/?$' => 'index.php?pagename=' . $this->path . '&key=$matches[2]'
+        ] + $rules;
+    }
 
-	    return $rules;
-	}
+    // Add the URL
+    final public function addQueryVars($vars)
+    {
+        array_push($vars, 'key');
+        return $vars;
+    }
 
-	// fire function that will act upon url query.
-	public final function template_redirect()
-	{
-		global $wp_query;
+    final public function amendResponseHeaders($headers)
+    {
+        if ($this->contentType === 'json') {
+            $headers['Content-Type'] = 'application/json;charset=utf-8';
+        }
 
-		if(isset($wp_query->query_vars[$this->path])) {
-			$this->intercept(get_query_var($this->path));
-			exit();
-		}
-	}
+        return $headers;
+    }
 
+    final public function templateRedirect()
+    {
+        global $wp_query;
+
+        status_header(200);
+
+        $this->intercept($wp_query->query['key']);
+        exit();
+    }
 }
